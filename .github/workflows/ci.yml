@@ -31,23 +31,44 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      - name: Run Python tests
         id: run_tests
         continue-on-error: true
         run: python -m pytest -v | tee pytest_output.txt
+
+      - name: Run Go tests
+        id: run_go_tests
+        continue-on-error: true
+        run: go test ./... -v | tee go_output.txt
 
       - name: Update CI dashboard log
         if: always() && github.event_name == 'push'
         run: |
           TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
           SHORT_SHA=$(git rev-parse --short HEAD)
-          SUMMARY=$(tail -n 1 pytest_output.txt | sed 's/=//g' | xargs)
+
+          PY_SUMMARY=$(tail -n 1 pytest_output.txt | sed 's/=//g' | xargs)
           if [ "${{ steps.run_tests.outcome }}" = "success" ]; then
-            STATUS="Passed"
+            PY_STATUS="Passed"
           else
-            STATUS="Failed"
+            PY_STATUS="Failed"
           fi
-          echo "| $TIMESTAMP | \`$SHORT_SHA\` | ${{ github.ref_name }} | $STATUS | $SUMMARY |" >> DASHBOARD.md
+          echo "| $TIMESTAMP | \`$SHORT_SHA\` | ${{ github.ref_name }} | Python | $PY_STATUS | $PY_SUMMARY |" >> DASHBOARD.md
+
+          GO_SUMMARY=$(grep -E '^(ok|FAIL|PASS)' go_output.txt | tail -n 1 | xargs)
+          if [ -z "$GO_SUMMARY" ]; then GO_SUMMARY="no go tests reported"; fi
+          if [ "${{ steps.run_go_tests.outcome }}" = "success" ]; then
+            GO_STATUS="Passed"
+          else
+            GO_STATUS="Failed"
+          fi
+          echo "| $TIMESTAMP | \`$SHORT_SHA\` | ${{ github.ref_name }} | Go | $GO_STATUS | $GO_SUMMARY |" >> DASHBOARD.md
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add DASHBOARD.md
@@ -57,5 +78,5 @@ jobs:
           fi
 
       - name: Fail job if tests failed
-        if: steps.run_tests.outcome == 'failure'
+        if: steps.run_tests.outcome == 'failure' || steps.run_go_tests.outcome == 'failure'
         run: exit 1
