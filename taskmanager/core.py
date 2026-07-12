@@ -20,22 +20,43 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+VALID_PRIORITIES = ("high", "medium", "low")
 
-def add_task(tasks: list[dict], title: str) -> list[dict]:
+
+def add_task(tasks: list[dict], title: str, priority: str = "medium") -> list[dict]:
     """Return a new task list with one task appended.
 
     The new task is given the next integer id (one more than the current
-    highest, or 1 for the first task), the supplied title, and a ``done``
-    flag of ``False``.
+    highest, or 1 for the first task), the supplied title, the given
+    ``priority`` (defaulting to ``"medium"``), and a ``done`` flag of
+    ``False``.
 
     Raises:
-        ValueError: if ``title`` is empty or only whitespace.
+        ValueError: if ``title`` is empty or only whitespace, or if
+            ``priority`` is not one of ``"high"``, ``"medium"`` or ``"low"``.
     """
     if title is None or not title.strip():
         raise ValueError("Task title must not be empty")
+    if priority not in VALID_PRIORITIES:
+        raise ValueError(
+            f"Invalid priority {priority!r}; must be one of {VALID_PRIORITIES}"
+        )
     next_id = max((task["id"] for task in tasks), default=0) + 1
-    new_task = {"id": next_id, "title": title.strip(), "done": False}
+    new_task = {
+        "id": next_id,
+        "title": title.strip(),
+        "done": False,
+        "priority": priority,
+    }
     return tasks + [new_task]
+
+
+def tasks_with_priority(tasks: list[dict], priority: str) -> list[dict]:
+    """Return a new list of the tasks whose priority equals ``priority``.
+
+    The input list is not modified, and the original order is preserved.
+    """
+    return [task for task in tasks if task["priority"] == priority]
 
 
 def complete_task(tasks: list[dict], task_id: int) -> list[dict]:
