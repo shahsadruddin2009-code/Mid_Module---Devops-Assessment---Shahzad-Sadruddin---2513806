@@ -6,6 +6,13 @@ venv/
 .pytest_cache/
 *.egg-info/
 
+# Go build artefacts
+*.exe
+priority_go
+
+# Transient benchmark snapshot (metrics.csv is kept as the comparison log)
+benchmarks/last_run.json
+
 # Local task store created when you run the CLI
 tasks.json
 
