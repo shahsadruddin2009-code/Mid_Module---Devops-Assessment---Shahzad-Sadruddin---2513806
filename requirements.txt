@@ -1,0 +1,2 @@
+# Testing dependency for the existing and your new tests.
+pytest>=8,<9
