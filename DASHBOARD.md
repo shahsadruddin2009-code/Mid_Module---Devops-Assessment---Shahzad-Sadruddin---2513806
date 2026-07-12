@@ -11,3 +11,5 @@ skipped by CI so it does not trigger an infinite loop).
 | 2026-07-12 07:01:28 UTC | `aadecbb` | main | Python | Passed | 25 passed in 0.04s |
 | 2026-07-12 07:06:51 UTC | `259b963` | main | Python | Passed | 26 passed in 0.04s |
 | 2026-07-12 07:14:58 UTC | `845ea5e` | main | Python | Passed | 26 passed in 0.04s |
+| 2026-07-12 07:20:39 UTC | `e5f3689` | feature/go-tests-and-dashboard-lang | Python | Passed | 26 passed in 0.03s |
+| 2026-07-12 07:20:39 UTC | `e5f3689` | feature/go-tests-and-dashboard-lang | Go | Passed | ok priority 0.005s |
