@@ -83,3 +83,10 @@ def test_sort_tasks_by_id_is_default():
 def test_sort_tasks_rejects_invalid_key():
     with pytest.raises(ValueError):
         core.sort_tasks([], by="not_a_field")
+
+
+def test_sort_tasks_does_not_mutate_input():
+    tasks = core.add_task([], "First")
+    original = list(tasks)
+    core.sort_tasks(tasks, by="id")
+    assert tasks == original
