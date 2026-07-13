@@ -53,8 +53,61 @@ taskmanager/
   cli.py      the command-line interface
 tests/
   test_core.py   tests for the existing operations
+infra/        Terraform (Infrastructure as Code) — see below
 requirements.txt
 ```
+
+## Continuous Integration and Infrastructure as Code
+
+This project uses two separate DevOps tools that do different jobs:
+
+| | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | [`infra/`](infra) |
+| --- | --- | --- |
+| Tool | GitHub Actions (YAML) | Terraform (HCL) |
+| Job | **CI automation** — runs the Python and Go tests on every push and appends a row to [`DASHBOARD.md`](DASHBOARD.md) | **Infrastructure as Code** — provisions the AWS resources the app depends on |
+| Runs on | GitHub's runners, automatically on push/PR | Your machine (or a CI job), on demand via `terraform apply` |
+
+They are complementary, not interchangeable: GitHub Actions cannot execute a
+Terraform configuration as a workflow, and Terraform does not run tests.
+
+### What the Terraform config creates
+
+The [`infra/`](infra) directory provisions a private, encrypted, versioned S3
+bucket for backups of the app's `tasks.json` data, following security best
+practices (public access fully blocked, SSE-S3 encryption, versioning, and a
+lifecycle policy that expires old backup versions).
+
+```
+infra/
+  versions.tf              provider and Terraform version constraints
+  variables.tf              input variables with validation
+  main.tf                   provider config and resource definitions
+  outputs.tf                useful values exported after apply
+  terraform.tfvars.example  sample variable values (copy to terraform.tfvars)
+```
+
+**Prerequisites:** [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.6.0 and AWS credentials configured (e.g. `aws configure`, an SSO profile, or the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` environment variables).
+
+**Usage:**
+
+```bash
+cd infra
+cp terraform.tfvars.example terraform.tfvars   # provide your own values
+
+terraform init
+terraform fmt -check
+terraform validate
+terraform plan
+terraform apply
+```
+
+To remove everything again: `terraform destroy`.
+
+Notes:
+- `terraform.tfvars` is git-ignored so environment-specific settings are never
+  committed; commit `terraform.tfvars.example` instead.
+- For team use, enable the S3 remote backend block in `infra/versions.tf` so
+  state is shared and locked rather than kept on one machine.
 
 ## Your task: add a task priority feature
 
