@@ -142,7 +142,19 @@ jobs:
           git add DASHBOARD.md infra/TERRAFORM_REPORT.md
           if ! git diff --cached --quiet; then
             git commit -m "Update CI dashboard log [skip ci]"
-            git push origin HEAD:${{ github.ref }}
+
+            # The remote branch can move on between checkout and this push
+            # (e.g. another push/CI run landing a commit in the meantime).
+            # Rebase onto the latest remote tip and retry a few times instead
+            # of failing the whole job on a plain non-fast-forward rejection.
+            for attempt in 1 2 3 4 5; do
+              if git push origin HEAD:${{ github.ref }}; then
+                break
+              fi
+              echo "Push rejected (attempt $attempt); fetching and rebasing before retrying..."
+              git fetch origin ${{ github.ref_name }}
+              git rebase origin/${{ github.ref_name }}
+            done
           fi
 
       - name: Fail job if tests failed
