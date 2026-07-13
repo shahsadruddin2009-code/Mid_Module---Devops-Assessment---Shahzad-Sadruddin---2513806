@@ -64,11 +64,22 @@ This project uses two separate DevOps tools that do different jobs:
 | | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | [`infra/`](infra) |
 | --- | --- | --- |
 | Tool | GitHub Actions (YAML) | Terraform (HCL) |
-| Job | **CI automation** — runs the Python and Go tests on every push and appends a row to [`DASHBOARD.md`](DASHBOARD.md) | **Infrastructure as Code** — provisions the AWS resources the app depends on |
+| Job | **CI automation** — runs the Python and Go tests on every push, and also runs `terraform fmt -check` / `terraform validate` against `infra/`, appending rows to [`DASHBOARD.md`](DASHBOARD.md) and writing the full Terraform output to [`infra/TERRAFORM_REPORT.md`](infra/TERRAFORM_REPORT.md) | **Infrastructure as Code** — provisions the AWS resources the app depends on |
 | Runs on | GitHub's runners, automatically on push/PR | Your machine (or a CI job), on demand via `terraform apply` |
 
 They are complementary, not interchangeable: GitHub Actions cannot execute a
 Terraform configuration as a workflow, and Terraform does not run tests.
+
+### CI Terraform report
+
+On every push, the CI job runs `terraform init`, `terraform fmt -check`, and
+`terraform validate` against [`infra/`](infra) (these don't need AWS
+credentials, so no cloud secrets are configured in this repo). The results
+are summarized as a row in [`DASHBOARD.md`](DASHBOARD.md) and the full output
+is written to [`infra/TERRAFORM_REPORT.md`](infra/TERRAFORM_REPORT.md) (this
+file is overwritten each run, not appended). `terraform plan`/`apply` are not
+run in CI — they remain manual, deliberate actions you run locally (see
+below), since they require real AWS credentials.
 
 ### What the Terraform config creates
 

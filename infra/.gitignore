@@ -24,3 +24,9 @@ override.tf.json
 
 # Lock file is intentionally committed:
 #   .terraform.lock.hcl
+
+# CI-generated intermediate output (the summarized infra/TERRAFORM_REPORT.md
+# is committed, but the raw command output it's built from is not).
+fmt_output.txt
+validate_output.txt
+

@@ -46,6 +46,27 @@ jobs:
         continue-on-error: true
         run: go test ./... -v | tee go_output.txt
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Terraform init
+        working-directory: infra
+        run: terraform init -input=false
+
+      - name: Terraform fmt check
+        id: tf_fmt
+        working-directory: infra
+        continue-on-error: true
+        run: terraform fmt -check -recursive -diff -no-color | tee fmt_output.txt
+
+      - name: Terraform validate
+        id: tf_validate
+        working-directory: infra
+        continue-on-error: true
+        run: terraform validate -no-color | tee validate_output.txt
+
       - name: Update CI dashboard log
         if: always() && github.event_name == 'push'
         run: |
@@ -78,14 +99,52 @@ jobs:
           fi
           echo "| $TIMESTAMP | \`$SHORT_SHA\` | ${{ github.ref_name }} | Go | $GO_STATUS | $GO_SUMMARY |" >> DASHBOARD.md
 
+          TF_FMT_OUTCOME="${{ steps.tf_fmt.outcome }}"
+          TF_VALIDATE_OUTCOME="${{ steps.tf_validate.outcome }}"
+
+          if [ "$TF_FMT_OUTCOME" = "success" ] && [ "$TF_VALIDATE_OUTCOME" = "success" ]; then
+            TF_STATUS="Passed"
+          else
+            TF_STATUS="Failed"
+          fi
+          TF_SUMMARY="fmt: $TF_FMT_OUTCOME, validate: $TF_VALIDATE_OUTCOME, plan: run manually (see README)"
+          echo "| $TIMESTAMP | \`$SHORT_SHA\` | ${{ github.ref_name }} | Terraform | $TF_STATUS | $TF_SUMMARY |" >> DASHBOARD.md
+
+          {
+            echo "# Terraform Report"
+            echo
+            echo "Automated report from the CI workflow ([.github/workflows/ci.yml](../.github/workflows/ci.yml))."
+            echo "Regenerated on every push — this file always reflects the latest run only (not appended)."
+            echo
+            echo "_Last updated: $TIMESTAMP — commit \`$SHORT_SHA\` on \`${{ github.ref_name }}\`_"
+            echo
+            echo "| Check | Result |"
+            echo "|---|---|"
+            echo "| \`terraform fmt -check\` | $TF_FMT_OUTCOME |"
+            echo "| \`terraform validate\` | $TF_VALIDATE_OUTCOME |"
+            echo "| \`terraform plan\` / \`terraform apply\` | not run in CI — no AWS credentials configured; run locally (see README) |"
+            echo
+            echo "## terraform fmt -check output"
+            echo
+            echo '```'
+            cat infra/fmt_output.txt 2>/dev/null || echo "(no output captured)"
+            echo '```'
+            echo
+            echo "## terraform validate output"
+            echo
+            echo '```'
+            cat infra/validate_output.txt 2>/dev/null || echo "(no output captured)"
+            echo '```'
+          } > infra/TERRAFORM_REPORT.md
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add DASHBOARD.md
+          git add DASHBOARD.md infra/TERRAFORM_REPORT.md
           if ! git diff --cached --quiet; then
             git commit -m "Update CI dashboard log [skip ci]"
             git push origin HEAD:${{ github.ref }}
           fi
 
       - name: Fail job if tests failed
-        if: steps.run_tests.outcome == 'failure' || steps.run_go_tests.outcome == 'failure'
+        if: steps.run_tests.outcome == 'failure' || steps.run_go_tests.outcome == 'failure' || steps.tf_fmt.outcome == 'failure' || steps.tf_validate.outcome == 'failure'
         run: exit 1

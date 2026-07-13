@@ -2,9 +2,13 @@
 
 This file is an automated log of test runs. The CI workflow
 ([.github/workflows/ci.yml](.github/workflows/ci.yml)) appends one row per
-language (Python and Go) to the table below every time it runs on a push, then
-commits and pushes the update back to the branch (the log commit itself is
-skipped by CI so it does not trigger an infinite loop).
+language (Python and Go) plus one row for the Terraform checks (`fmt` and
+`validate`; no AWS credentials are configured, so `plan`/`apply` are not run
+in CI) to the table below every time it runs on a push, then commits and
+pushes the update back to the branch (the log commit itself is skipped by CI
+so it does not trigger an infinite loop). The full Terraform output is
+written to [infra/TERRAFORM_REPORT.md](infra/TERRAFORM_REPORT.md), which is
+overwritten (not appended) on every run.
 
 | Timestamp (UTC) | Commit | Branch | Language | Result | Test summary |
 |---|---|---|---|---|---|
