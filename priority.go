@@ -21,10 +21,10 @@
 // Like priority.py, this program only ever operates on the folder that
 // contains it; it never walks into or mutates an ancestor git repository.
 //
-// Usage (run from the repository root so it operates on the project folder):
+// Usage:
 //
-//	go run tests/priority.go [-m "commit message"] [-b branch] [-remote URL]
-//	                         [-dry-run] [-compare] [-tool NAME]
+//	go run priority.go [-m "commit message"] [-b branch] [-remote URL]
+//	                   [-dry-run] [-compare] [-tool NAME]
 //
 // Requirements: git on PATH, and (for real pushes) valid GitHub credentials.
 package main
