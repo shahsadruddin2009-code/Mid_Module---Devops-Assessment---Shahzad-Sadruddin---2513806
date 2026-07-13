@@ -36,6 +36,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -59,16 +60,16 @@ type phaseResult struct {
 
 // runReport is the full record of one execution, serialised to JSON/CSV.
 type runReport struct {
-	Tool          string        `json:"tool"`
-	Timestamp     string        `json:"timestamp"`
-	Branch        string        `json:"branch"`
-	DryRun        bool          `json:"dry_run"`
-	Phases        []phaseResult `json:"phases"`
-	TotalMs       float64       `json:"total_ms"`
-	BytesPushed   int64         `json:"bytes_pushed"`
-	PhasesPerSec  float64       `json:"phases_per_second"`
-	BytesPerSec   float64       `json:"bytes_per_second"`
-	GitInvocations int          `json:"git_invocations"`
+	Tool           string        `json:"tool"`
+	Timestamp      string        `json:"timestamp"`
+	Branch         string        `json:"branch"`
+	DryRun         bool          `json:"dry_run"`
+	Phases         []phaseResult `json:"phases"`
+	TotalMs        float64       `json:"total_ms"`
+	BytesPushed    int64         `json:"bytes_pushed"`
+	PhasesPerSec   float64       `json:"phases_per_second"`
+	BytesPerSec    float64       `json:"bytes_per_second"`
+	GitInvocations int           `json:"git_invocations"`
 }
 
 // runner executes git commands inside repoDir and accumulates metrics.
@@ -180,6 +181,14 @@ func writeReport(repoDir string, rep runReport) error {
 	defer f.Close()
 	_, err = f.WriteString(row)
 	return err
+}
+
+// sortPhasesByDuration sorts phases in place in ascending order of Duration,
+// so the fastest phase comes first and the slowest comes last.
+func sortPhasesByDuration(phases []phaseResult) {
+	sort.Slice(phases, func(i, j int) bool {
+		return phases[i].Duration < phases[j].Duration
+	})
 }
 
 func summarise(rep runReport) {

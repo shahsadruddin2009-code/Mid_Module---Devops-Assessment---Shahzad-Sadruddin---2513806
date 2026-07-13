@@ -1,0 +1,26 @@
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files (may contain secrets)
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Variable files with real values (keep the .example instead)
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# CLI config and override files
+.terraformrc
+terraform.rc
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Lock file is intentionally committed:
+#   .terraform.lock.hcl

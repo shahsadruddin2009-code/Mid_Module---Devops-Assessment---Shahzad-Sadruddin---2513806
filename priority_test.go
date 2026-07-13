@@ -134,3 +134,17 @@ func TestWriteReportAppendsSecondRow(t *testing.T) {
 		t.Fatalf("expected 3 csv rows, got %d", len(rows))
 	}
 }
+
+func TestSortPhasesByDuration(t *testing.T) {
+	phases := []phaseResult{
+		{Name: "phase1", Duration: 3 * time.Second},
+		{Name: "phase2", Duration: 1 * time.Second},
+		{Name: "phase3", Duration: 2 * time.Second},
+	}
+	sortPhasesByDuration(phases)
+	if phases[0].Name != "phase2" || phases[1].Name != "phase3" || phases[2].Name != "phase1" {
+		t.Errorf("phases not sorted by duration: %+v", phases)
+	} else {
+		t.Logf("phases sorted by duration: %+v", phases)
+	}
+}

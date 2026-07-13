@@ -1,0 +1,12 @@
+# Copy this file to terraform.tfvars and adjust the values for your environment.
+# terraform.tfvars is git-ignored so it never leaks environment-specific config.
+
+aws_region            = "eu-west-2"
+project_name          = "task-manager"
+environment           = "dev"
+backup_retention_days = 30
+
+tags = {
+  Owner = "Shahzad Sadruddin"
+  Course = "CSO7024-DevOps"
+}
