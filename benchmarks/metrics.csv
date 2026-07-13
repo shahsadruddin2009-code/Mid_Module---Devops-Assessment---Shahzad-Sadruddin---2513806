@@ -1,2 +1,3 @@
 timestamp,tool,branch,dry_run,total_ms,git_invocations,phases_per_second,bytes_pushed,bytes_per_second
 2026-07-12T07:13:41Z,go,main,true,209.819,3,23.83,27778013,132390234.07
+2026-07-13T01:08:11Z,go,main,false,1519.836,5,3.29,765215478,503485393.33
