@@ -148,3 +148,88 @@ func TestSortPhasesByDuration(t *testing.T) {
 		t.Logf("phases sorted by duration: %+v", phases)
 	}
 }
+func TestDefaultRemoteURL(t *testing.T) {
+	want := "https://github.com/shahsadruddin2009-code/" +
+		"Mid_Module---Devops-Assessment---Shahzad-Sadruddin---2513806.git"
+
+	if defaultRemoteURL != want {
+		t.Errorf("defaultRemoteURL = %q, want %q", defaultRemoteURL, want)
+	} else {
+		t.Logf("defaultRemoteURL = %q, as expected", defaultRemoteURL)
+	}
+}
+
+func TestTimePhaseRecordsDurationAndNotSkipped(t *testing.T) {
+	var phases []phaseResult
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
+	timePhase := func(name string, f func()) {
+		start := time.Now()
+		f()
+		duration := time.Since(start)
+		phases = append(phases, phaseResult{Name: name, Duration: duration, Skipped: false})
+	}
+
+	timePhase("example", func() {
+		time.Sleep(100 * time.Millisecond)
+	})
+
+	if len(phases) != 1 {
+		t.Fatalf("expected 1 phase, got %d", len(phases))
+	}
+	if phases[0].Duration <= 0 {
+		t.Errorf("expected positive duration, got %v", phases[0].Duration)
+	}
+	if phases[0].Skipped {
+		t.Errorf("expected phase not to be skipped")
+	}
+}
+
+func TestWriteReportHandlesEmptyPhases(t *testing.T) {
+	repoDir := t.TempDir()
+	rep := runReport{Tool: "go", Timestamp: "t1", Branch: "main", Phases: []phaseResult{}}
+
+	if err := writeReport(repoDir, rep); err != nil {
+		t.Fatalf("writeReport returned error: %v", err)
+	}
+}
+
+func TestErrorHandlingDirname(t *testing.T) {
+	// Wrong directory: a file sits where a directory is expected, so
+	// os.MkdirAll inside writeReport cannot create "benchmarks" under it
+	// and must return an error. hasdir tracks whether that error occurred.
+	wrongDir := filepath.Join(t.TempDir(), "not-a-dir")
+	if err := os.WriteFile(wrongDir, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	hasdir := false
+	if err := writeReport(wrongDir, runReport{Tool: "go", Timestamp: "t1", Branch: "main"}); err != nil {
+		hasdir = true
+	}
+	if !hasdir {
+		t.Fatalf("expected error for wrong directory %q, got nil", wrongDir)
+	}
+
+	// Correct directory: a real, valid temp directory. writeReport must
+	// succeed, so hasdir stays true and the test passes.
+	correctDir := t.TempDir()
+	hasdir = false
+	if err := writeReport(correctDir, runReport{Tool: "go", Timestamp: "t2", Branch: "main"}); err == nil {
+		hasdir = true
+	}
+	if !hasdir {
+		t.Fatalf("expected no error for correct directory %q", correctDir)
+	}
+}
+
+func TestErrorHandlingWriteFile(t *testing.T) {
+	// Create a temporary directory and make it read-only to simulate a write error.
+	tempDir := t.TempDir()
+	os.Chmod(tempDir, 0500) // read-only
+	if err := writeReport(tempDir, runReport{Tool: "go", Timestamp: "t1", Branch: "main"}); err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+	os.Chmod(tempDir, 0700) // restore permissions for cleanup
+}
