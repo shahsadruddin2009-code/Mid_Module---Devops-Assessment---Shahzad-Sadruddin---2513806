@@ -3,7 +3,7 @@
 Automated report from the CI workflow ([.github/workflows/ci.yml](../.github/workflows/ci.yml)).
 Regenerated on every push — this file always reflects the latest run only (not appended).
 
-_Last updated: 2026-07-14 02:26:26 UTC — commit `4533bc2` on `main`_
+_Last updated: 2026-07-19 04:07:52 UTC — commit `c5f454d` on `main`_
 
 | Check | Result |
 |---|---|
